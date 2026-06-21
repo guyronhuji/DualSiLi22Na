@@ -90,6 +90,24 @@ Run the default 10,000-event validation macro:
 ./build/DualSiLi22Na build/macros/run_10000.mac
 ```
 
+Or use the local helper, which configures/builds and runs a macro:
+
+```bash
+bash scripts/run_local.sh
+```
+
+For the local weighted HPGe triple-coincidence run:
+
+```bash
+WEIGHTED=1 bash scripts/run_local.sh
+```
+
+You can also choose any macro explicitly:
+
+```bash
+MACRO=macros/run_importance_hpge_triple.mac bash scripts/run_local.sh
+```
+
 The macro uses four Geant4 worker threads by default:
 
 ```text
