@@ -45,8 +45,8 @@ def load_table(path: Path) -> dict[str, np.ndarray]:
         return tree.arrays(library="np")
 
 
-def hist(ax, values, bins, title, xlabel):
-    ax.hist(values, bins=bins, histtype="step", linewidth=1.3)
+def hist(ax, values, bins, title, xlabel, weights=None):
+    ax.hist(values, bins=bins, weights=weights, histtype="step", linewidth=1.3)
     ax.set_title(title)
     ax.set_xlabel(xlabel)
     ax.set_ylabel("Events")
@@ -76,13 +76,14 @@ def main() -> None:
     hpge1 = table["E_HPGe_1_keV"]
     hpge2 = table["E_HPGe_2_keV"]
     hpge3 = table["E_HPGe_3_keV"]
+    weights = table.get("event_weight")
 
     fig, axes = plt.subplots(2, 2, figsize=(11, 8))
-    hist(axes[0, 0], e1, 200, "SiLi_1 spectrum", "Energy [keV]")
-    hist(axes[0, 1], e2, 200, "SiLi_2 spectrum", "Energy [keV]")
-    hist(axes[1, 0], esum, 200, "SiLi summed spectrum", "Energy [keV]")
-    axes[1, 1].hist(e1, bins=200, histtype="step", label="SiLi_1")
-    axes[1, 1].hist(e2, bins=200, histtype="step", label="SiLi_2")
+    hist(axes[0, 0], e1, 200, "SiLi_1 spectrum", "Energy [keV]", weights)
+    hist(axes[0, 1], e2, 200, "SiLi_2 spectrum", "Energy [keV]", weights)
+    hist(axes[1, 0], esum, 200, "SiLi summed spectrum", "Energy [keV]", weights)
+    axes[1, 1].hist(e1, bins=200, weights=weights, histtype="step", label="SiLi_1")
+    axes[1, 1].hist(e2, bins=200, weights=weights, histtype="step", label="SiLi_2")
     axes[1, 1].set_title("Si(Li) symmetry comparison")
     axes[1, 1].set_xlabel("Energy [keV]")
     axes[1, 1].set_ylabel("Events")
@@ -91,14 +92,21 @@ def main() -> None:
     fig.savefig(outdir / "sili_spectra.png", dpi=180)
 
     fig, axes = plt.subplots(1, 3, figsize=(14, 4))
-    hist(axes[0], hpge1, 250, "HPGe_1 spectrum", "Energy [keV]")
-    hist(axes[1], hpge2, 250, "HPGe_2 spectrum", "Energy [keV]")
-    hist(axes[2], hpge3, 250, "HPGe_3 spectrum", "Energy [keV]")
+    hist(axes[0], hpge1, 250, "HPGe_1 spectrum", "Energy [keV]", weights)
+    hist(axes[1], hpge2, 250, "HPGe_2 spectrum", "Energy [keV]", weights)
+    hist(axes[2], hpge3, 250, "HPGe_3 spectrum", "Energy [keV]", weights)
     fig.tight_layout()
     fig.savefig(outdir / "hpge_spectra.png", dpi=180)
 
     fig, ax = plt.subplots(figsize=(6, 5))
-    ax.hist2d(e1, e2, bins=160, range=[[0, 600], [0, 600]], cmap="viridis")
+    ax.hist2d(
+        e1,
+        e2,
+        bins=160,
+        range=[[0, 600], [0, 600]],
+        weights=weights,
+        cmap="viridis",
+    )
     ax.set_title("SiLi_1 vs SiLi_2")
     ax.set_xlabel("SiLi_1 energy [keV]")
     ax.set_ylabel("SiLi_2 energy [keV]")
@@ -116,10 +124,18 @@ def main() -> None:
         160,
         "Si(Li) sum gated by HPGe near 1274.5 keV",
         "Energy [keV]",
+        None if weights is None else weights[gate1274],
     )
-    axes[1].hist(hpge1[gate_sili], bins=220, histtype="step", label="HPGe_1")
-    axes[1].hist(hpge2[gate_sili], bins=220, histtype="step", label="HPGe_2")
-    axes[1].hist(hpge3[gate_sili], bins=220, histtype="step", label="HPGe_3")
+    gated_weights = None if weights is None else weights[gate_sili]
+    axes[1].hist(
+        hpge1[gate_sili], bins=220, weights=gated_weights, histtype="step", label="HPGe_1"
+    )
+    axes[1].hist(
+        hpge2[gate_sili], bins=220, weights=gated_weights, histtype="step", label="HPGe_2"
+    )
+    axes[1].hist(
+        hpge3[gate_sili], bins=220, weights=gated_weights, histtype="step", label="HPGe_3"
+    )
     axes[1].set_title("HPGe spectra gated by nonzero Si(Li)")
     axes[1].set_xlabel("Energy [keV]")
     axes[1].set_ylabel("Events")
@@ -127,6 +143,8 @@ def main() -> None:
     fig.tight_layout()
     fig.savefig(outdir / "gated_spectra.png", dpi=180)
 
+    if weights is not None:
+        print("Using event_weight column for weighted histograms")
     print(f"Wrote validation plots to {outdir.resolve()}")
 
 

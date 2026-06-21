@@ -17,6 +17,7 @@ enum class DetectorId : G4int {
 
 struct EventRecord {
   G4int eventID = -1;
+  G4double eventWeight = 1.0;
   std::array<G4double, static_cast<std::size_t>(DetectorId::Count)> energy{};
   std::array<G4int, static_cast<std::size_t>(DetectorId::Count)> hits{};
   std::array<G4double, static_cast<std::size_t>(DetectorId::Count)> firstTime{};

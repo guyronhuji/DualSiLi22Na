@@ -3,6 +3,7 @@
 #include "RunAction.hh"
 
 #include "G4Event.hh"
+#include "G4PrimaryParticle.hh"
 #include "G4PrimaryVertex.hh"
 #include "G4SystemOfUnits.hh"
 
@@ -24,6 +25,11 @@ void EventAction::BeginOfEventAction(const G4Event* event) {
 
 void EventAction::EndOfEventAction(const G4Event* event) {
   if (auto vertex = event->GetPrimaryVertex(0)) {
+    if (auto primary = vertex->GetPrimary(0)) {
+      fRecord.eventWeight = primary->GetWeight();
+    } else {
+      fRecord.eventWeight = vertex->GetWeight();
+    }
     fRecord.primaryTime = vertex->GetT0();
     const auto pos = vertex->GetPosition();
     fRecord.vertexX = pos.x();

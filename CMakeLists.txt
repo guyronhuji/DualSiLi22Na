@@ -79,6 +79,7 @@ add_executable(DualSiLi22Na
   src/PrimaryGeneratorAction.cc
   src/RunAction.cc
   src/SensitiveDetector.cc
+  src/SteppingAction.cc
   src/TrackingAction.cc
 )
 

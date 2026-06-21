@@ -111,6 +111,17 @@ bash aws/bootstrap_ubuntu_24_04.sh
 bash aws/run_production_ubuntu.sh
 ```
 
+An importance-sampled HPGe triple-coincidence macro is also provided:
+
+```bash
+./build/DualSiLi22Na build/macros/run_importance_hpge_triple.mac
+```
+
+It enables explicit fast `22Na` primaries, biases the two 511 keV gammas into
+the back-to-back HPGe cones and the 1274.5 keV gamma into the third HPGe cone,
+and writes `event_weight` for weighted spectra. The validation plotting script
+uses `event_weight` automatically when the column is present.
+
 During a multithreaded run, each worker writes a private CSV shard under:
 
 ```text
@@ -272,6 +283,13 @@ Macro commands:
 /geometry/siliCrystalFaceGap 2 mm
 /geometry/hpgeFrontDistance 33 mm
 /source/decayTime 1e20 s
+/source/fast22NaPrimaries false
+/source/importanceSampling false
+/source/importanceMode hpgeTriple
+/source/importanceConeHalfAngle 45 deg
+/source/betaEndpointEnergy 545 keV
+/source/suppressFastPositronAnnihilation true
+/source/positronKillEnergy 0.1 keV
 /output/fileName output/dual_sili_22na.parquet
 /output/parquetPythonCommand /usr/bin/arch -arm64 python3
 /output/truthOutput false

@@ -44,6 +44,16 @@ The final output is:
 build-aws/output/dual_sili_22na_50000000.parquet
 ```
 
+For the importance-sampled HPGe triple-coincidence macro, run:
+
+```bash
+MACRO=macros/run_importance_hpge_triple.mac bash aws/run_production_ubuntu.sh
+```
+
+That macro uses explicit fast `22Na` primaries, biases the two 511 keV photons
+toward the back-to-back HPGe pair and the 1274.5 keV photon toward the third
+HPGe, and writes an `event_weight` column for weighted analysis.
+
 ## 3. Copy Results Off The Instance
 
 If the AWS CLI is configured on the instance, copy the Parquet file to S3:

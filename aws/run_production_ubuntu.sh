@@ -6,6 +6,7 @@ GEANT4_PREFIX="${GEANT4_PREFIX:-$HOME/Code/GEANT4}"
 VENV_DIR="${VENV_DIR:-$HOME/dual-sili-venv}"
 BUILD_DIR="${BUILD_DIR:-$repo_root/build-aws}"
 JOBS="${JOBS:-$(nproc)}"
+MACRO="${MACRO:-macros/run_50000000.mac}"
 
 source "$VENV_DIR/bin/activate"
 source "$GEANT4_PREFIX/bin/geant4.sh"
@@ -18,8 +19,8 @@ cmake -S "$repo_root" -B "$BUILD_DIR" \
 cmake --build "$BUILD_DIR" -j "$JOBS"
 
 cd "$BUILD_DIR"
-./DualSiLi22Na macros/run_50000000.mac
+./DualSiLi22Na "$MACRO"
 
 echo
 echo "Final Parquet output:"
-echo "  $BUILD_DIR/output/dual_sili_22na_50000000.parquet"
+echo "  $BUILD_DIR/output/"

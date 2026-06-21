@@ -63,6 +63,28 @@ DetectorConstruction::DetectorConstruction(
   fSourceMessenger->DeclarePropertyWithUnit(
       "decayTime", "s", fParameters->decayTime,
       "Time assigned to the 22Na ion before radioactive decay sampling");
+  fSourceMessenger->DeclareProperty(
+      "fast22NaPrimaries", fParameters->fast22NaPrimaries,
+      "Generate explicit beta+, 511 keV, and 1274.5 keV primaries instead of a radioactive 22Na ion");
+  fSourceMessenger->DeclareProperty(
+      "importanceSampling", fParameters->importanceSampling,
+      "Bias explicit 22Na gamma directions into selected detector cones and write event_weight");
+  fSourceMessenger->DeclareProperty(
+      "importanceMode", fParameters->importanceMode,
+      "Importance mode. Supported: hpgeTriple");
+  fSourceMessenger->DeclarePropertyWithUnit(
+      "importanceConeHalfAngle", "deg", fParameters->importanceConeHalfAngle,
+      "Half-angle for HPGe gamma direction bias cones");
+  fSourceMessenger->DeclarePropertyWithUnit(
+      "betaEndpointEnergy", "keV", fParameters->betaEndpointEnergy,
+      "Endpoint kinetic energy for the explicit allowed beta+ spectrum");
+  fSourceMessenger->DeclareProperty(
+      "suppressFastPositronAnnihilation",
+      fParameters->suppressFastPositronAnnihilation,
+      "Kill low-energy positrons in fast explicit-primary mode to avoid double-counting manual 511 keV gammas");
+  fSourceMessenger->DeclarePropertyWithUnit(
+      "positronKillEnergy", "keV", fParameters->positronKillEnergy,
+      "Kinetic-energy threshold used when suppressing fast-mode positron annihilation");
 
   fOutputMessenger = new G4GenericMessenger(this, "/output/", "Output controls");
   fOutputMessenger->DeclareProperty(

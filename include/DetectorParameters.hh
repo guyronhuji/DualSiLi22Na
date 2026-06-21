@@ -35,6 +35,14 @@ struct DetectorParameters {
   G4double hpgeFrontDistance = 33.0 * mm;
 
   G4double decayTime = 1.0e20 * second;
+  G4bool fast22NaPrimaries = false;
+  G4bool importanceSampling = false;
+  G4String importanceMode = "hpgeTriple";
+  G4double importanceConeHalfAngle = 45.0 * deg;
+  G4double betaEndpointEnergy = 545.0 * keV;
+  G4bool suppressFastPositronAnnihilation = true;
+  G4double positronKillEnergy = 100.0 * eV;
+
   G4String outputFileName = "output/dual_sili_22na.parquet";
 #ifdef __APPLE__
   G4String parquetPythonCommand = "/usr/bin/arch -arm64 python3";

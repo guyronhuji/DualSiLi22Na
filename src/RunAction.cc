@@ -126,7 +126,7 @@ std::string RunAction::ShardPath() const {
 }
 
 void RunAction::WriteHeader() {
-  fShard << "eventID,E_SiLi_1_keV,E_SiLi_2_keV,E_SiLi_sum_keV,"
+  fShard << "eventID,event_weight,E_SiLi_1_keV,E_SiLi_2_keV,E_SiLi_sum_keV,"
             "E_HPGe_1_keV,E_HPGe_2_keV,E_HPGe_3_keV,"
             "E_total_all_detectors_keV,Nhit_SiLi_1,Nhit_SiLi_2,"
             "Nhit_HPGe_1,Nhit_HPGe_2,Nhit_HPGe_3,tfirst_SiLi_1_ns,"
@@ -184,9 +184,10 @@ void RunAction::FillEvent(const EventRecord& record) {
     return value < 0.0 ? -1.0 : value / ns;
   };
 
-  fShard << std::setprecision(8) << record.eventID << ',' << eSiLi1 << ','
-         << eSiLi2 << ',' << eSiLiSum << ',' << eHPGe1 << ',' << eHPGe2
-         << ',' << eHPGe3 << ',' << (eSiLiSum + eHPGeSum) << ','
+  fShard << std::setprecision(8) << record.eventID << ','
+         << record.eventWeight << ',' << eSiLi1 << ',' << eSiLi2 << ','
+         << eSiLiSum << ',' << eHPGe1 << ',' << eHPGe2 << ',' << eHPGe3
+         << ',' << (eSiLiSum + eHPGeSum) << ','
          << record.hits[Idx(DetectorId::SiLi1)] << ','
          << record.hits[Idx(DetectorId::SiLi2)] << ','
          << record.hits[Idx(DetectorId::HPGe1)] << ','
