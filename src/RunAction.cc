@@ -131,7 +131,7 @@ void RunAction::WriteHeader() {
             "E_total_all_detectors_keV,Nhit_SiLi_1,Nhit_SiLi_2,"
             "Nhit_HPGe_1,Nhit_HPGe_2,Nhit_HPGe_3,tfirst_SiLi_1_ns,"
             "tfirst_SiLi_2_ns,tfirst_HPGe_1_ns,tfirst_HPGe_2_ns,"
-            "tfirst_HPGe_3_ns";
+            "tfirst_HPGe_3_ns,primary_beta_kinetic_keV";
   if (fParameters->truthOutput) {
     fShard << ",primary_decay_time_ns,primary_vertex_x_mm,primary_vertex_y_mm,"
               "primary_vertex_z_mm,n_positrons_created,n_511keV_gammas_created,"
@@ -197,7 +197,8 @@ void RunAction::FillEvent(const EventRecord& record) {
          << timeNs(record.firstTime[Idx(DetectorId::SiLi2)]) << ','
          << timeNs(record.firstTime[Idx(DetectorId::HPGe1)]) << ','
          << timeNs(record.firstTime[Idx(DetectorId::HPGe2)]) << ','
-         << timeNs(record.firstTime[Idx(DetectorId::HPGe3)]);
+         << timeNs(record.firstTime[Idx(DetectorId::HPGe3)]) << ','
+         << record.primaryBetaKineticEnergy / keV;
 
   if (fParameters->truthOutput) {
     fShard << ',' << record.primaryTime / ns << ',' << record.vertexX / mm

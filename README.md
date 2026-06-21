@@ -148,8 +148,17 @@ An importance-sampled HPGe triple-coincidence macro is also provided:
 
 It enables explicit fast `22Na` primaries, biases the two 511 keV gammas into
 the back-to-back HPGe cones and the 1274.5 keV gamma into the third HPGe cone,
-and writes `event_weight` for weighted spectra. The validation plotting script
-uses `event_weight` automatically when the column is present.
+and writes `event_weight` for weighted spectra. This mode is a fast biased
+detector-response sample, not a bit-for-bit replacement for full Geant4
+radioactive decay.
+
+Fast weighted outputs also include `primary_beta_kinetic_keV`. The analysis
+notebook uses that generated positron kinetic energy to build response-template
+endpoint and Fierz fits, so the fit is performed on the simulated deposited
+Si(Li) response rather than forcing an ideal beta spectrum directly onto the
+detector-energy histogram. Older weighted Parquet files without this column can
+still be plotted, but their beta fits fall back to the analytic deposited-energy
+approximation; rerun the importance macro to get the template-fit path.
 
 During a multithreaded run, each worker writes a private CSV shard under:
 
@@ -297,6 +306,11 @@ analysis/notebooks/dual_sili_22na_spectrum_analysis.ipynb
 
 It reads `output/dual_sili_22na.parquet` and writes regenerated figures under
 `output/notebook_figures/`.
+
+If the input has `event_weight`, notebook histograms, gates, and fits use those
+weights. If it also has `primary_beta_kinetic_keV`, the triple-coincidence
+endpoint and Fierz fits use a weighted detector-response template, which is the
+recommended path for importance-sampled data.
 
 ## Geometry Controls
 

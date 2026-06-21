@@ -25,6 +25,7 @@ struct EventRecord {
   G4double vertexX = 0.0;
   G4double vertexY = 0.0;
   G4double vertexZ = 0.0;
+  G4double primaryBetaKineticEnergy = -1.0;
   G4int positronsCreated = 0;
   G4int gammas511Created = 0;
   G4int gammas1274Created = 0;

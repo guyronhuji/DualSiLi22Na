@@ -3,6 +3,7 @@
 #include "RunAction.hh"
 
 #include "G4Event.hh"
+#include "G4ParticleDefinition.hh"
 #include "G4PrimaryParticle.hh"
 #include "G4PrimaryVertex.hh"
 #include "G4SystemOfUnits.hh"
@@ -35,6 +36,26 @@ void EventAction::EndOfEventAction(const G4Event* event) {
     fRecord.vertexX = pos.x();
     fRecord.vertexY = pos.y();
     fRecord.vertexZ = pos.z();
+  }
+
+  for (G4int iv = 0; iv < event->GetNumberOfPrimaryVertex(); ++iv) {
+    auto vertex = event->GetPrimaryVertex(iv);
+    if (!vertex) {
+      continue;
+    }
+    for (G4int ip = 0; ip < vertex->GetNumberOfParticle(); ++ip) {
+      auto primary = vertex->GetPrimary(ip);
+      if (!primary || !primary->GetG4code()) {
+        continue;
+      }
+      if (primary->GetG4code()->GetParticleName() == "e+") {
+        fRecord.primaryBetaKineticEnergy = primary->GetKineticEnergy();
+        break;
+      }
+    }
+    if (fRecord.primaryBetaKineticEnergy >= 0.0) {
+      break;
+    }
   }
 
   fRunAction->FillEvent(fRecord);
