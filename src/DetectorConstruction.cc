@@ -68,7 +68,7 @@ DetectorConstruction::DetectorConstruction(
       "Generate explicit beta+, 511 keV, and 1274.5 keV primaries instead of a radioactive 22Na ion");
   fSourceMessenger->DeclareProperty(
       "importanceSampling", fParameters->importanceSampling,
-      "Bias explicit 22Na gamma directions into selected detector cones and write event_weight");
+      "Disabled: the previous fast weighted surrogate did not preserve the full 22Na decay/transport spectrum");
   fSourceMessenger->DeclareProperty(
       "importanceMode", fParameters->importanceMode,
       "Importance mode. Supported: hpgeTriple");

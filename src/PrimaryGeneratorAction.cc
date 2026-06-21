@@ -61,7 +61,17 @@ void PrimaryGeneratorAction::ConfigureIon() {
 }
 
 void PrimaryGeneratorAction::GeneratePrimaries(G4Event* event) {
-  if (fParameters->fast22NaPrimaries || fParameters->importanceSampling) {
+  if (fParameters->importanceSampling) {
+    G4Exception(
+        "PrimaryGeneratorAction::GeneratePrimaries",
+        "ImportanceSamplingDisabled", FatalException,
+        "The old importanceSampling mode is disabled. It used a hand-made fast "
+        "22Na surrogate source, emitted annihilation photons at the source, and "
+        "suppressed Geant4 positron annihilation; weighted output from that mode "
+        "does not preserve the full decay/transport spectrum.");
+  }
+
+  if (fParameters->fast22NaPrimaries) {
     GenerateExplicit22NaPrimaries(event);
     return;
   }

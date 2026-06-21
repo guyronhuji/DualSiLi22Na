@@ -44,15 +44,9 @@ The final output is:
 build-aws/output/dual_sili_22na_50000000.parquet
 ```
 
-For the importance-sampled HPGe triple-coincidence macro, run:
-
-```bash
-MACRO=macros/run_importance_hpge_triple.mac bash aws/run_production_ubuntu.sh
-```
-
-That macro uses explicit fast `22Na` primaries, biases the two 511 keV photons
-toward the back-to-back HPGe pair and the 1274.5 keV photon toward the third
-HPGe, and writes an `event_weight` column for weighted analysis.
+The previous importance-sampled HPGe triple-coincidence macro is disabled and
+should not be used for production physics. It relied on a fast surrogate source
+that did not preserve the full `22Na` decay/transport spectrum.
 
 The runner prints the exact expected Parquet path before starting Geant4.
 During a run, worker CSV shards are written first; the final Parquet file is

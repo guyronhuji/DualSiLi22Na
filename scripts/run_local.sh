@@ -9,7 +9,10 @@ WEIGHTED="${WEIGHTED:-0}"
 if [[ -n "${MACRO:-}" ]]; then
   macro="$MACRO"
 elif [[ "$WEIGHTED" == "1" || "$WEIGHTED" == "ON" || "$WEIGHTED" == "true" ]]; then
-  macro="$repo_root/macros/run_importance_hpge_triple.mac"
+  echo "WEIGHTED=1 is disabled: the old importance-sampling mode used a fast"
+  echo "surrogate source and does not preserve the full 22Na decay/transport spectrum."
+  echo "Run the unbiased macro instead, or pass MACRO=... explicitly for diagnostics."
+  exit 2
 else
   macro="$repo_root/macros/run_10000.mac"
 fi

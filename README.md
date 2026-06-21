@@ -96,18 +96,7 @@ Or use the local helper, which configures/builds and runs a macro:
 bash scripts/run_local.sh
 ```
 
-For the local weighted HPGe triple-coincidence run:
-
-```bash
-WEIGHTED=1 bash scripts/run_local.sh
-```
-
 The local helper prints the exact expected Parquet path before the run starts.
-For the weighted macro, the default path is:
-
-```text
-build/output/dual_sili_22na_importance_hpge_triple.parquet
-```
 
 During a run, Geant4 writes worker CSV shards first. The final Parquet file is
 created at end-of-run. If the executable exits after writing shards but before
@@ -140,25 +129,11 @@ bash aws/bootstrap_ubuntu_24_04.sh
 bash aws/run_production_ubuntu.sh
 ```
 
-An importance-sampled HPGe triple-coincidence macro is also provided:
-
-```bash
-./build/DualSiLi22Na build/macros/run_importance_hpge_triple.mac
-```
-
-It enables explicit fast `22Na` primaries, biases the two 511 keV gammas into
-the back-to-back HPGe cones and the 1274.5 keV gamma into the third HPGe cone,
-and writes `event_weight` for weighted spectra. This mode is a fast biased
-detector-response sample, not a bit-for-bit replacement for full Geant4
-radioactive decay.
-
-Fast weighted outputs also include `primary_beta_kinetic_keV`. The analysis
-notebook uses that generated positron kinetic energy to build response-template
-endpoint and Fierz fits, so the fit is performed on the simulated deposited
-Si(Li) response rather than forcing an ideal beta spectrum directly onto the
-detector-energy histogram. Older weighted Parquet files without this column can
-still be plotted, but their beta fits fall back to the analytic deposited-energy
-approximation; rerun the importance macro to get the template-fit path.
+The previous importance-sampled HPGe triple-coincidence mode is disabled. It
+used a hand-made fast `22Na` surrogate source, emitted annihilation photons at
+the source, and suppressed Geant4 positron annihilation. That made weighted
+outputs faster, but it did not preserve the full decay/transport spectrum and
+should not be used for production physics.
 
 During a multithreaded run, each worker writes a private CSV shard under:
 
@@ -307,10 +282,8 @@ analysis/notebooks/dual_sili_22na_spectrum_analysis.ipynb
 It reads `output/dual_sili_22na.parquet` and writes regenerated figures under
 `output/notebook_figures/`.
 
-If the input has `event_weight`, notebook histograms, gates, and fits use those
-weights. If it also has `primary_beta_kinetic_keV`, the triple-coincidence
-endpoint and Fierz fits use a weighted detector-response template, which is the
-recommended path for importance-sampled data.
+If the input has `event_weight`, notebook histograms and gates use those
+weights. The standard production path is the unbiased radioactive-decay run.
 
 ## Geometry Controls
 
