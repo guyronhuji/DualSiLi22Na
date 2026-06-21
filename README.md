@@ -102,6 +102,17 @@ For the local weighted HPGe triple-coincidence run:
 WEIGHTED=1 bash scripts/run_local.sh
 ```
 
+The local helper prints the exact expected Parquet path before the run starts.
+For the weighted macro, the default path is:
+
+```text
+build/output/dual_sili_22na_importance_hpge_triple.parquet
+```
+
+During a run, Geant4 writes worker CSV shards first. The final Parquet file is
+created at end-of-run. If the executable exits after writing shards but before
+creating Parquet, the helper attempts to recover the Parquet from those shards.
+
 You can also choose any macro explicitly:
 
 ```bash

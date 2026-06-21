@@ -54,6 +54,11 @@ That macro uses explicit fast `22Na` primaries, biases the two 511 keV photons
 toward the back-to-back HPGe pair and the 1274.5 keV photon toward the third
 HPGe, and writes an `event_weight` column for weighted analysis.
 
+The runner prints the exact expected Parquet path before starting Geant4.
+During a run, worker CSV shards are written first; the final Parquet file is
+created at end-of-run. If Geant4 exits after writing shards but before creating
+Parquet, the runner attempts to recover the Parquet file from those shards.
+
 ## 3. Copy Results Off The Instance
 
 If the AWS CLI is configured on the instance, copy the Parquet file to S3:
