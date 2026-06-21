@@ -1,0 +1,16 @@
+build*/
+cmake-build-*/
+
+*.root
+*.csv
+*.parquet
+*_shards/
+
+output/*
+!output/.gitkeep
+
+analysis/__pycache__/
+__pycache__/
+.ipynb_checkpoints/
+
+.DS_Store

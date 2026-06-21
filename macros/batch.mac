@@ -1,0 +1,9 @@
+# Compact batch run. Edit the last line to change the event count.
+/run/verbose 1
+/run/numberOfThreads 4
+/event/verbose 0
+/tracking/verbose 0
+/source/decayTime 1e20 s
+/output/fileName output/dual_sili_22na.parquet
+/run/initialize
+/run/beamOn 10000

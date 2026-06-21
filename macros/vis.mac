@@ -1,0 +1,28 @@
+/control/verbose 1
+/run/verbose 1
+/run/numberOfThreads 1
+/event/verbose 0
+/tracking/verbose 0
+
+/source/decayTime 1e20 s
+/run/initialize
+
+/vis/open OGL 1200x900-0+0
+/vis/viewer/set/background white
+/vis/drawVolume
+/vis/viewer/set/viewpointThetaPhi 65 35
+/vis/viewer/set/style surface
+/vis/viewer/set/hiddenEdge 1
+/vis/geometry/set/visibility World 0 false
+/vis/geometry/set/forceSolid Na22Source 0 true
+/vis/geometry/set/forceSolid KaptonPlus 0 true
+/vis/geometry/set/forceSolid KaptonMinus 0 true
+/vis/geometry/set/forceSolid SiLi1Active 0 true
+/vis/geometry/set/forceSolid SiLi2Active 0 true
+/vis/geometry/set/forceSolid HPGe1Active 0 true
+/vis/geometry/set/forceSolid HPGe2Active 0 true
+/vis/geometry/set/forceSolid HPGe3Active 0 true
+/vis/scene/add/axes 0 0 0 80 mm
+/vis/scene/add/trajectories smooth
+/vis/scene/endOfEventAction accumulate 20
+/vis/viewer/flush

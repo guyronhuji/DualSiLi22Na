@@ -1,0 +1,20 @@
+/run/verbose 1
+/run/numberOfThreads 4
+/event/verbose 0
+/tracking/verbose 0
+
+/geometry/sourceRadius 2.5 mm
+/geometry/sourceThickness 10 um
+/geometry/kaptonThickness 1 um
+/geometry/siliActiveDiameter 50 mm
+/geometry/siliActiveThickness 5 mm
+/geometry/siliCrystalFaceGap 2 mm
+/geometry/hpgeFrontDistance 33 mm
+
+/source/decayTime 1e20 s
+/output/fileName output/dual_sili_22na.parquet
+/output/truthOutput false
+
+/run/initialize
+/geometry/test/run
+/run/beamOn 10000
