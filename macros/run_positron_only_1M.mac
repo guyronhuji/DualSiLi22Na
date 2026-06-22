@@ -1,0 +1,27 @@
+/run/verbose 1
+/run/numberOfThreads 16
+/run/printProgress 100000
+/event/verbose 0
+/tracking/verbose 0
+
+/geometry/sourceRadius 2.5 mm
+/geometry/sourceThickness 10 um
+/geometry/kaptonThickness 1 um
+/geometry/siliActiveDiameter 50 mm
+/geometry/siliActiveThickness 5 mm
+/geometry/siliCrystalFaceGap 2 mm
+/geometry/hpgeFrontDistance 33 mm
+
+/source/positronOnly true
+/source/betaSpectrumFile 22Na_05.raw
+
+/output/fileName output/22Na_b05.parquet
+/output/truthOutput false
+/output/hpgeGateEnabled true
+/output/hpgeGateMode hpge12
+/output/hpgeGateMin 508 keV
+/output/hpgeGateMax 514 keV
+
+/run/initialize
+/geometry/test/run
+/run/beamOn 100000000
