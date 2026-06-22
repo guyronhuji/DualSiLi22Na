@@ -41,6 +41,7 @@ public:
   void EndOfEventAction(const G4Event* event) override;
 
   void AddEnergy(DetectorId detector, G4double edep, G4double globalTime);
+  G4bool ShouldAbortForHpgeOutputGate() const;
   void CountSecondary(const G4String& particleName, G4double kineticEnergy);
 
 private:

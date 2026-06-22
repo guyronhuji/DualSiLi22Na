@@ -5,6 +5,7 @@
 #include "G4RunManager.hh"
 #include "G4Step.hh"
 #include "G4SystemOfUnits.hh"
+#include "G4Track.hh"
 
 SensitiveDetector::SensitiveDetector(const G4String& name,
                                      DetectorId detectorId)
@@ -22,6 +23,10 @@ G4bool SensitiveDetector::ProcessHits(G4Step* step,
   if (eventAction) {
     eventAction->AddEnergy(fDetectorId, edep,
                            step->GetPreStepPoint()->GetGlobalTime());
+    if (eventAction->ShouldAbortForHpgeOutputGate()) {
+      step->GetTrack()->SetTrackStatus(fStopAndKill);
+      G4RunManager::GetRunManager()->AbortEvent();
+    }
   }
   return true;
 }

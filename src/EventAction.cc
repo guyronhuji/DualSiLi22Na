@@ -75,6 +75,10 @@ void EventAction::AddEnergy(DetectorId detector, G4double edep,
   }
 }
 
+G4bool EventAction::ShouldAbortForHpgeOutputGate() const {
+  return fRunAction && fRunAction->HpgeOutputGateCannotPass(fRecord);
+}
+
 void EventAction::CountSecondary(const G4String& particleName,
                                  G4double kineticEnergy) {
   if (particleName == "e+") {

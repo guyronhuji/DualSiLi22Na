@@ -207,6 +207,35 @@ G4bool RunAction::PassesHpgeOutputGate(G4double eHPGe1, G4double eHPGe2,
   return false;
 }
 
+G4bool RunAction::HpgeOutputGateCannotPass(const EventRecord& record) const {
+  if (!fParameters->hpgeGateEnabled) {
+    return false;
+  }
+
+  const auto maxEnergy = fParameters->hpgeGateMaxEnergy;
+  const auto eHPGe1 = record.energy[Idx(DetectorId::HPGe1)];
+  const auto eHPGe2 = record.energy[Idx(DetectorId::HPGe2)];
+  const auto eHPGe3 = record.energy[Idx(DetectorId::HPGe3)];
+  const auto mode = ToStdString(fParameters->hpgeGateMode);
+
+  if (mode == "any") {
+    return eHPGe1 > maxEnergy && eHPGe2 > maxEnergy && eHPGe3 > maxEnergy;
+  }
+  if (mode == "hpge12" || mode == "backToBack" || mode == "back_to_back") {
+    return eHPGe1 > maxEnergy || eHPGe2 > maxEnergy;
+  }
+  if (mode == "all" || mode == "hpge123" || mode == "triple") {
+    return eHPGe1 > maxEnergy || eHPGe2 > maxEnergy || eHPGe3 > maxEnergy;
+  }
+
+  G4Exception("RunAction::HpgeOutputGateCannotPass", "UnknownHPGeGateMode",
+              FatalException,
+              ("Unknown /output/hpgeGateMode: " + mode +
+               ". Use any, hpge12, all, or hpge123.")
+                  .c_str());
+  return true;
+}
+
 void RunAction::FillEvent(const EventRecord& record) {
   if (!fShard.is_open()) {
     return;

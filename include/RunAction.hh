@@ -18,6 +18,7 @@ public:
   void EndOfRunAction(const G4Run* run) override;
 
   void FillEvent(const EventRecord& record);
+  G4bool HpgeOutputGateCannotPass(const EventRecord& record) const;
 
 private:
   void OpenShard();

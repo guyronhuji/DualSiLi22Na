@@ -108,6 +108,18 @@ You can also choose any macro explicitly:
 MACRO=macros/run_importance_hpge_triple.mac bash scripts/run_local.sh
 ```
 
+For better CPU scaling, split one macro into multiple independent Geant4
+processes and merge their Parquet files at the end:
+
+```bash
+PROCESSES=16 THREADS_PER_PROCESS=1 MACRO=macros/run_50000000.mac \
+  bash scripts/run_multiprocess.sh
+```
+
+Use `TOTAL_EVENTS=...` to override the macro's `/run/beamOn` count. By default
+the merged output is written next to the macro's requested output with `_mp`
+added before `.parquet`.
+
 The macro uses four Geant4 worker threads by default:
 
 ```text
