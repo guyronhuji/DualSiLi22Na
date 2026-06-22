@@ -9,6 +9,9 @@ THREADS_PER_PROCESS="${THREADS_PER_PROCESS:-1}"
 JOBS="${JOBS:-$PROCESSES}"
 BUILD="${BUILD:-1}"
 RUN_LABEL="${RUN_LABEL:-$(date +%Y%m%d_%H%M%S)}"
+PROGRESS="${PROGRESS:-1}"
+PROGRESS_INTERVAL="${PROGRESS_INTERVAL:-5}"
+PROGRESS_BAR_WIDTH="${PROGRESS_BAR_WIDTH:-40}"
 
 if [[ "$MACRO" != /* ]]; then
   MACRO="$repo_root/$MACRO"
@@ -81,6 +84,8 @@ extra_events=$((total_events % PROCESSES))
 pids=()
 part_outputs=()
 part_offsets=()
+part_logs=()
+part_events=()
 offset=0
 
 cleanup() {
@@ -104,6 +109,8 @@ for ((i = 0; i < PROCESSES; ++i)); do
   part_log="$run_dir/part_${i}.log"
   part_outputs+=("$part_output")
   part_offsets+=("$offset")
+  part_logs+=("$part_log")
+  part_events+=("$events_this")
 
   awk \
     -v output="$part_output" \
@@ -134,6 +141,94 @@ for ((i = 0; i < PROCESSES; ++i)); do
   echo "  launched part $i: events=$events_this offset=$offset log=$part_log"
   offset=$((offset + events_this))
 done
+
+latest_logged_event() {
+  local log="$1"
+  if [[ ! -f "$log" ]]; then
+    echo 0
+    return
+  fi
+  awk '
+    {
+      for (i = 1; i <= NF - 2; ++i) {
+        if ($i == "Event" && $(i + 2) == "starts" && $(i + 1) ~ /^[0-9]+$/) {
+          last = $(i + 1)
+        }
+      }
+    }
+    END {
+      if (last == "") {
+        print 0
+      } else {
+        print last
+      }
+    }
+  ' "$log"
+}
+
+process_running() {
+  local pid="$1"
+  local running_pid
+  while read -r running_pid; do
+    if [[ "$running_pid" == "$pid" ]]; then
+      return 0
+    fi
+  done < <(jobs -pr)
+  return 1
+}
+
+print_progress() {
+  local completed="$1"
+  local active="$2"
+  local percent=$((completed * 100 / total_events))
+  local filled=$((completed * PROGRESS_BAR_WIDTH / total_events))
+  local empty=$((PROGRESS_BAR_WIDTH - filled))
+  local bar=""
+  local i
+
+  for ((i = 0; i < filled; ++i)); do
+    bar+="#"
+  done
+  for ((i = 0; i < empty; ++i)); do
+    bar+="-"
+  done
+
+  if [[ -t 1 ]]; then
+    printf "\r[%s] %3d%% %s/%s events, %s active process(es)" \
+      "$bar" "$percent" "$completed" "$total_events" "$active"
+  else
+    printf "[%s] %3d%% %s/%s events, %s active process(es)\n" \
+      "$bar" "$percent" "$completed" "$total_events" "$active"
+  fi
+}
+
+if [[ "$PROGRESS" == "1" || "$PROGRESS" == "ON" || "$PROGRESS" == "true" ]]; then
+  while true; do
+    completed=0
+    active=0
+    for ((i = 0; i < ${#pids[@]}; ++i)); do
+      if process_running "${pids[$i]}"; then
+        active=$((active + 1))
+        latest="$(latest_logged_event "${part_logs[$i]}")"
+        if (( latest > part_events[$i] )); then
+          latest="${part_events[$i]}"
+        fi
+        completed=$((completed + latest))
+      else
+        completed=$((completed + part_events[$i]))
+      fi
+    done
+
+    print_progress "$completed" "$active"
+    if (( active == 0 )); then
+      break
+    fi
+    sleep "$PROGRESS_INTERVAL"
+  done
+  if [[ -t 1 ]]; then
+    printf "\n"
+  fi
+fi
 
 failed=0
 for pid in "${pids[@]}"; do
