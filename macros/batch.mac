@@ -5,5 +5,9 @@
 /tracking/verbose 0
 /source/decayTime 1e20 s
 /output/fileName output/dual_sili_22na.parquet
+/output/hpgeGateEnabled true
+/output/hpgeGateMode hpge12
+/output/hpgeGateMin 508 keV
+/output/hpgeGateMax 514 keV
 /run/initialize
 /run/beamOn 10000

@@ -25,6 +25,10 @@
 
 /output/fileName output/dual_sili_22na_importance_hpge_triple.parquet
 /output/truthOutput false
+/output/hpgeGateEnabled true
+/output/hpgeGateMode hpge123
+/output/hpgeGateMin 508 keV
+/output/hpgeGateMax 514 keV
 
 /run/initialize
 /geometry/test/run
