@@ -164,6 +164,21 @@ On Apple Silicon with an x86_64 Geant4 build, the default Parquet combiner uses:
 /output/parquetPythonCommand /usr/bin/arch -arm64 python3
 ```
 
+To reduce output size for coincidence analyses, enable HPGe-gated row writing in
+a macro. The physics simulation still runs normally; only event rows failing the
+gate are skipped:
+
+```text
+/output/hpgeGateEnabled true
+/output/hpgeGateMode hpge12
+/output/hpgeGateMin 508 keV
+/output/hpgeGateMax 514 keV
+```
+
+Supported `/output/hpgeGateMode` values are `any`, `hpge12`, `all`, and
+`hpge123`. The long AWS `b=0` reweighting macro uses `hpge12`, matching the
+two back-to-back 511 keV HPGe gate used in the analysis notebooks.
+
 Change that command if your Python/pyarrow installation lives elsewhere.
 
 ## View Geometry

@@ -40,6 +40,10 @@ std::string QuoteForShell(const std::string& value) {
 std::string ToStdString(const G4String& value) {
   return std::string(value.data());
 }
+
+bool InGate(G4double energy, G4double minEnergy, G4double maxEnergy) {
+  return energy >= minEnergy && energy <= maxEnergy;
+}
 }
 
 RunAction::RunAction(std::shared_ptr<DetectorParameters> parameters)
@@ -62,6 +66,13 @@ void RunAction::BeginOfRunAction(const G4Run*) {
            << fParameters->outputFileName << G4endl
            << "Output: worker CSV shards will be written under "
            << ShardDirectory() << G4endl;
+    if (fParameters->hpgeGateEnabled) {
+      G4cout << "Output: HPGe gated row writing enabled: mode="
+             << fParameters->hpgeGateMode << ", window=["
+             << fParameters->hpgeGateMinEnergy / keV << ", "
+             << fParameters->hpgeGateMaxEnergy / keV << "] keV"
+             << G4endl;
+    }
     return;
   }
 
@@ -91,6 +102,11 @@ void RunAction::EndOfRunAction(const G4Run* run) {
          << G4endl
          << "  final combined output: " << fParameters->outputFileName
          << G4endl;
+  if (fParameters->hpgeGateEnabled) {
+    G4cout << "  HPGe output gate: mode=" << fParameters->hpgeGateMode
+           << ", window=[" << fParameters->hpgeGateMinEnergy / keV << ", "
+           << fParameters->hpgeGateMaxEnergy / keV << "] keV" << G4endl;
+  }
 }
 
 void RunAction::OpenShard() {
@@ -160,6 +176,37 @@ void RunAction::CombineShardsOnMaster(const G4Run*) {
   }
 }
 
+G4bool RunAction::PassesHpgeOutputGate(G4double eHPGe1, G4double eHPGe2,
+                                       G4double eHPGe3) const {
+  if (!fParameters->hpgeGateEnabled) {
+    return true;
+  }
+
+  const auto minEnergy = fParameters->hpgeGateMinEnergy / keV;
+  const auto maxEnergy = fParameters->hpgeGateMaxEnergy / keV;
+  const auto hpge1 = InGate(eHPGe1, minEnergy, maxEnergy);
+  const auto hpge2 = InGate(eHPGe2, minEnergy, maxEnergy);
+  const auto hpge3 = InGate(eHPGe3, minEnergy, maxEnergy);
+  const auto mode = ToStdString(fParameters->hpgeGateMode);
+
+  if (mode == "any") {
+    return hpge1 || hpge2 || hpge3;
+  }
+  if (mode == "hpge12" || mode == "backToBack" || mode == "back_to_back") {
+    return hpge1 && hpge2;
+  }
+  if (mode == "all" || mode == "hpge123" || mode == "triple") {
+    return hpge1 && hpge2 && hpge3;
+  }
+
+  G4Exception("RunAction::PassesHpgeOutputGate", "UnknownHPGeGateMode",
+              FatalException,
+              ("Unknown /output/hpgeGateMode: " + mode +
+               ". Use any, hpge12, all, or hpge123.")
+                  .c_str());
+  return false;
+}
+
 void RunAction::FillEvent(const EventRecord& record) {
   if (!fShard.is_open()) {
     return;
@@ -178,6 +225,10 @@ void RunAction::FillEvent(const EventRecord& record) {
   }
   if (eHPGeSum > 0.0) {
     ++fEventsWithHPGeEnergy;
+  }
+
+  if (!PassesHpgeOutputGate(eHPGe1, eHPGe2, eHPGe3)) {
+    return;
   }
 
   auto timeNs = [](G4double value) {

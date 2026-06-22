@@ -26,6 +26,8 @@ private:
   std::string ShardDirectory() const;
   std::string ShardPath() const;
   void WriteHeader();
+  G4bool PassesHpgeOutputGate(G4double eHPGe1, G4double eHPGe2,
+                              G4double eHPGe3) const;
 
   std::shared_ptr<DetectorParameters> fParameters;
   std::ofstream fShard;

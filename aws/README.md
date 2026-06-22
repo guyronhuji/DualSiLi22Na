@@ -62,6 +62,10 @@ The macro uses:
 /run/printProgress 100000
 /source/positronOnly true
 /source/betaSpectrumFile 22Na_0.raw
+/output/hpgeGateEnabled true
+/output/hpgeGateMode hpge12
+/output/hpgeGateMin 508 keV
+/output/hpgeGateMax 514 keV
 /run/beamOn 2000000000
 ```
 
@@ -74,6 +78,10 @@ build-aws/output/22Na_b0_reweight_base_2B.parquet
 This run is large. Since the 100M-event template is several GB, use a large EBS
 volume for the 2B-event run; 500 GB is a practical minimum, and 1 TB gives more
 room for temporary CSV shards during Parquet conversion.
+
+The macro uses gated row writing, so Geant4 still generates 2B events but only
+rows with HPGe1 and HPGe2 in the 508-514 keV window are written to the CSV
+shards and final Parquet file.
 
 The previous importance-sampled HPGe triple-coincidence macro is disabled and
 should not be used for production physics. It relied on a fast surrogate source

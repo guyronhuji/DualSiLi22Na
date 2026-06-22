@@ -53,6 +53,10 @@ struct DetectorParameters {
   G4String parquetPythonCommand = "python3";
 #endif
   G4bool truthOutput = false;
+  G4bool hpgeGateEnabled = false;
+  G4double hpgeGateMinEnergy = 508.0 * keV;
+  G4double hpgeGateMaxEnergy = 514.0 * keV;
+  G4String hpgeGateMode = "hpge12";
 };
 
 #endif

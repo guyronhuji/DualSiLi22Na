@@ -102,6 +102,18 @@ DetectorConstruction::DetectorConstruction(
   fOutputMessenger->DeclareProperty(
       "truthOutput", fParameters->truthOutput,
       "Write optional truth-level particle counters and primary vertex fields");
+  fOutputMessenger->DeclareProperty(
+      "hpgeGateEnabled", fParameters->hpgeGateEnabled,
+      "Only write event rows passing the configured HPGe energy gate");
+  fOutputMessenger->DeclarePropertyWithUnit(
+      "hpgeGateMin", "keV", fParameters->hpgeGateMinEnergy,
+      "Lower HPGe energy gate bound for gated output");
+  fOutputMessenger->DeclarePropertyWithUnit(
+      "hpgeGateMax", "keV", fParameters->hpgeGateMaxEnergy,
+      "Upper HPGe energy gate bound for gated output");
+  fOutputMessenger->DeclareProperty(
+      "hpgeGateMode", fParameters->hpgeGateMode,
+      "HPGe output gate mode: any, hpge12, all, or hpge123");
 }
 
 DetectorConstruction::~DetectorConstruction() {

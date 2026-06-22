@@ -20,6 +20,10 @@
 
 /output/fileName output/22Na_b0_reweight_base_2B.parquet
 /output/truthOutput false
+/output/hpgeGateEnabled true
+/output/hpgeGateMode hpge12
+/output/hpgeGateMin 508 keV
+/output/hpgeGateMax 514 keV
 
 /run/initialize
 /geometry/test/run
