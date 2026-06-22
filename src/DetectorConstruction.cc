@@ -114,6 +114,12 @@ DetectorConstruction::DetectorConstruction(
   fOutputMessenger->DeclareProperty(
       "hpgeGateMode", fParameters->hpgeGateMode,
       "HPGe output gate mode: any, hpge12, all, or hpge123");
+  fOutputMessenger->DeclareProperty(
+      "progressFile", fParameters->progressFileName,
+      "Optional flushed per-worker progress file for external monitors");
+  fOutputMessenger->DeclareProperty(
+      "progressEvery", fParameters->progressUpdateInterval,
+      "Write progressFile every N processed events. Use 0 to disable.");
 }
 
 DetectorConstruction::~DetectorConstruction() {

@@ -52,6 +52,7 @@ RunAction::RunAction(std::shared_ptr<DetectorParameters> parameters)
 void RunAction::BeginOfRunAction(const G4Run*) {
   fIsMaster = G4Threading::IsMasterThread();
   fThreadId = G4Threading::G4GetThreadId();
+  fEventsProcessed = 0;
   fEventsWritten = 0;
   fEventsWithSiLiEnergy = 0;
   fEventsWithHPGeEnergy = 0;
@@ -77,10 +78,13 @@ void RunAction::BeginOfRunAction(const G4Run*) {
   }
 
   OpenShard();
+  OpenProgress();
 }
 
 void RunAction::EndOfRunAction(const G4Run* run) {
   if (!fIsMaster) {
+    WriteProgress(true);
+    CloseProgress();
     CloseShard();
     gEventsWritten += fEventsWritten;
     gEventsWithSiLiEnergy += fEventsWithSiLiEnergy;
@@ -127,6 +131,45 @@ void RunAction::CloseShard() {
   }
 }
 
+void RunAction::OpenProgress() {
+  if (fParameters->progressFileName.empty() ||
+      fParameters->progressUpdateInterval <= 0) {
+    return;
+  }
+
+  const auto path = ProgressPath();
+  const auto parent = std::filesystem::path(path).parent_path();
+  if (!parent.empty()) {
+    std::filesystem::create_directories(parent);
+  }
+  fProgress.open(path, std::ios::out | std::ios::trunc);
+  if (!fProgress) {
+    G4Exception("RunAction::OpenProgress", "ProgressOpenFailed",
+                FatalException,
+                ("Could not open progress file " + path).c_str());
+  }
+  WriteProgress(true);
+}
+
+void RunAction::CloseProgress() {
+  if (fProgress.is_open()) {
+    fProgress.close();
+  }
+}
+
+void RunAction::WriteProgress(G4bool force) {
+  if (!fProgress.is_open()) {
+    return;
+  }
+  if (!force &&
+      fEventsProcessed %
+              static_cast<std::uint64_t>(fParameters->progressUpdateInterval) !=
+          0) {
+    return;
+  }
+  fProgress << fEventsProcessed << '\n' << std::flush;
+}
+
 std::string RunAction::ShardDirectory() const {
   std::filesystem::path output(ToStdString(fParameters->outputFileName));
   const auto parent = output.has_parent_path() ? output.parent_path()
@@ -139,6 +182,16 @@ std::string RunAction::ShardPath() const {
   return (std::filesystem::path(ShardDirectory()) /
           ("events_t" + threadName + ".csv"))
       .string();
+}
+
+std::string RunAction::ProgressPath() const {
+  std::filesystem::path path(ToStdString(fParameters->progressFileName));
+  const auto threadName = fThreadId < 0 ? "serial" : std::to_string(fThreadId);
+  const auto parent = path.has_parent_path() ? path.parent_path()
+                                             : std::filesystem::path(".");
+  const auto stem = path.stem().string();
+  const auto extension = path.extension().string();
+  return (parent / (stem + "_t" + threadName + extension)).string();
 }
 
 void RunAction::WriteHeader() {
@@ -240,6 +293,9 @@ void RunAction::FillEvent(const EventRecord& record) {
   if (!fShard.is_open()) {
     return;
   }
+
+  ++fEventsProcessed;
+  WriteProgress(false);
 
   const auto eSiLi1 = record.energy[Idx(DetectorId::SiLi1)] / keV;
   const auto eSiLi2 = record.energy[Idx(DetectorId::SiLi2)] / keV;

@@ -5,6 +5,7 @@
 #include "EventAction.hh"
 #include "G4UserRunAction.hh"
 
+#include <cstdint>
 #include <fstream>
 #include <memory>
 #include <string>
@@ -23,18 +24,24 @@ public:
 private:
   void OpenShard();
   void CloseShard();
+  void OpenProgress();
+  void CloseProgress();
+  void WriteProgress(G4bool force);
   void CombineShardsOnMaster(const G4Run* run);
   std::string ShardDirectory() const;
   std::string ShardPath() const;
+  std::string ProgressPath() const;
   void WriteHeader();
   G4bool PassesHpgeOutputGate(G4double eHPGe1, G4double eHPGe2,
                               G4double eHPGe3) const;
 
   std::shared_ptr<DetectorParameters> fParameters;
   std::ofstream fShard;
+  std::ofstream fProgress;
   std::vector<char> fShardBuffer;
   G4bool fIsMaster = false;
   G4int fThreadId = -1;
+  std::uint64_t fEventsProcessed = 0;
   G4int fEventsWritten = 0;
   G4int fEventsWithSiLiEnergy = 0;
   G4int fEventsWithHPGeEnergy = 0;

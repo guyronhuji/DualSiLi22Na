@@ -120,9 +120,12 @@ Use `TOTAL_EVENTS=...` to override the macro's `/run/beamOn` count. By default
 the merged output is written next to the macro's requested output with `_mp`
 added before `.parquet`.
 
-The multiprocess runner prints an aggregate progress bar from the worker logs.
-Use `PROGRESS_INTERVAL=10` to update every 10 seconds, or `PROGRESS=0` to turn
-the progress display off.
+The multiprocess runner prints an aggregate progress bar from flushed worker
+progress sidecar files. Use `PROGRESS_INTERVAL=10` to update every 10 seconds,
+or `PROGRESS=0` to turn the progress display off. Set `PROGRESS_EVENTS=1000`
+to write those files every 1000 processed events per worker thread if you want
+more frequent updates. If unset, the runner chooses a cadence near 1000 updates
+per process, capped at 10,000 events between updates.
 
 The macro uses four Geant4 worker threads by default:
 

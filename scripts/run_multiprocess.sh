@@ -12,6 +12,7 @@ RUN_LABEL="${RUN_LABEL:-$(date +%Y%m%d_%H%M%S)}"
 PROGRESS="${PROGRESS:-1}"
 PROGRESS_INTERVAL="${PROGRESS_INTERVAL:-5}"
 PROGRESS_BAR_WIDTH="${PROGRESS_BAR_WIDTH:-40}"
+PROGRESS_EVENTS="${PROGRESS_EVENTS:-}"
 
 if [[ "$MACRO" != /* ]]; then
   MACRO="$repo_root/$MACRO"
@@ -28,6 +29,25 @@ fi
 if [[ -z "$total_events" || ! "$total_events" =~ ^[0-9]+$ ]]; then
   echo "Could not determine TOTAL_EVENTS. Set TOTAL_EVENTS=... or add /run/beamOn to the macro." >&2
   exit 2
+fi
+if [[ -z "$PROGRESS_EVENTS" ]]; then
+  macro_progress="$(awk '$1 == "/run/printProgress" {print $2}' "$MACRO" | tail -1)"
+  events_per_process=$(((total_events + PROCESSES - 1) / PROCESSES))
+  progress_from_size=$(((events_per_process + 999) / 1000))
+  if (( progress_from_size < 1 )); then
+    progress_from_size=1
+  fi
+  PROGRESS_EVENTS=10000
+  if [[ "$macro_progress" =~ ^[0-9]+$ && "$macro_progress" != "0" &&
+        "$macro_progress" -lt "$PROGRESS_EVENTS" ]]; then
+    PROGRESS_EVENTS="$macro_progress"
+  fi
+  if (( progress_from_size < PROGRESS_EVENTS )); then
+    PROGRESS_EVENTS="$progress_from_size"
+  fi
+fi
+if [[ -z "$PROGRESS_EVENTS" || ! "$PROGRESS_EVENTS" =~ ^[0-9]+$ || "$PROGRESS_EVENTS" == "0" ]]; then
+  PROGRESS_EVENTS=10000
 fi
 
 macro_output="$(awk '$1 == "/output/fileName" {print $2}' "$MACRO" | tail -1)"
@@ -76,6 +96,7 @@ echo "  macro: $MACRO"
 echo "  generated events: $total_events"
 echo "  processes: $PROCESSES"
 echo "  Geant4 threads per process: $THREADS_PER_PROCESS"
+echo "  progress sidecar update: every $PROGRESS_EVENTS event(s) per worker thread"
 echo "  run directory: $run_dir"
 echo "  final Parquet: $final_output"
 
@@ -84,7 +105,8 @@ extra_events=$((total_events % PROCESSES))
 pids=()
 part_outputs=()
 part_offsets=()
-part_logs=()
+part_progress_files=()
+part_status_files=()
 part_events=()
 offset=0
 
@@ -107,20 +129,29 @@ for ((i = 0; i < PROCESSES; ++i)); do
   part_macro="$run_dir/part_${i}.mac"
   part_output="$run_dir/part_${i}.parquet"
   part_log="$run_dir/part_${i}.log"
+  part_progress="$run_dir/part_${i}.progress"
+  part_status="$run_dir/part_${i}.status"
   part_outputs+=("$part_output")
   part_offsets+=("$offset")
-  part_logs+=("$part_log")
+  part_progress_files+=("$part_progress")
+  part_status_files+=("$part_status")
   part_events+=("$events_this")
 
   awk \
     -v output="$part_output" \
     -v threads="$THREADS_PER_PROCESS" \
     -v events="$events_this" \
+    -v progress="$part_progress" \
+    -v progress_events="$PROGRESS_EVENTS" \
     '
       $1 == "/output/fileName" {
         print "/output/fileName " output
+        print "/output/progressFile " progress
+        print "/output/progressEvery " progress_events
         next
       }
+      $1 == "/output/progressFile" { next }
+      $1 == "/output/progressEvery" { next }
       $1 == "/run/numberOfThreads" {
         print "/run/numberOfThreads " threads
         next
@@ -134,7 +165,10 @@ for ((i = 0; i < PROCESSES; ++i)); do
 
   (
     cd "$BUILD_DIR"
-    ./DualSiLi22Na "$part_macro" > "$part_log" 2>&1
+    status=0
+    ./DualSiLi22Na "$part_macro" > "$part_log" 2>&1 || status=$?
+    printf "%s\n" "$status" > "$part_status"
+    exit "$status"
   ) &
   pids+=("$!")
 
@@ -142,39 +176,28 @@ for ((i = 0; i < PROCESSES; ++i)); do
   offset=$((offset + events_this))
 done
 
-latest_logged_event() {
-  local log="$1"
-  if [[ ! -f "$log" ]]; then
-    echo 0
-    return
+latest_progress_count() {
+  local base="$1"
+  local total=0
+  local value
+  local files=()
+  local stem="${base%.*}"
+  local extension=""
+  if [[ "$base" == *.* ]]; then
+    extension=".${base##*.}"
   fi
-  awk '
-    {
-      for (i = 1; i <= NF - 2; ++i) {
-        if ($i == "Event" && $(i + 2) == "starts" && $(i + 1) ~ /^[0-9]+$/) {
-          last = $(i + 1)
-        }
-      }
-    }
-    END {
-      if (last == "") {
-        print 0
-      } else {
-        print last
-      }
-    }
-  ' "$log"
-}
 
-process_running() {
-  local pid="$1"
-  local running_pid
-  while read -r running_pid; do
-    if [[ "$running_pid" == "$pid" ]]; then
-      return 0
+  shopt -s nullglob
+  files=("$base" "${stem}"_t*"${extension}")
+  shopt -u nullglob
+
+  for file in "${files[@]}"; do
+    value="$(tail -n 1 "$file" 2>/dev/null || true)"
+    if [[ "$value" =~ ^[0-9]+$ ]]; then
+      total=$((total + value))
     fi
-  done < <(jobs -pr)
-  return 1
+  done
+  echo "$total"
 }
 
 print_progress() {
@@ -207,9 +230,9 @@ if [[ "$PROGRESS" == "1" || "$PROGRESS" == "ON" || "$PROGRESS" == "true" ]]; the
     completed=0
     active=0
     for ((i = 0; i < ${#pids[@]}; ++i)); do
-      if process_running "${pids[$i]}"; then
+      if [[ ! -f "${part_status_files[$i]}" ]]; then
         active=$((active + 1))
-        latest="$(latest_logged_event "${part_logs[$i]}")"
+        latest="$(latest_progress_count "${part_progress_files[$i]}")"
         if (( latest > part_events[$i] )); then
           latest="${part_events[$i]}"
         fi
@@ -270,7 +293,7 @@ for path_text, offset_text in zip(items[0::2], items[1::2]):
     table = pq.read_table(path)
     offset = int(offset_text)
     event_id_index = table.schema.get_field_index("eventID")
-    if event_id_index >= 0 and offset:
+    if event_id_index >= 0 and offset and table.num_rows:
         event_ids = pc.add(
             table.column(event_id_index),
             pa.scalar(offset, type=table.schema.field(event_id_index).type),
