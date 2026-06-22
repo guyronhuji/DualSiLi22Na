@@ -8,8 +8,8 @@ opposing cryogenic Si(Li) detectors, with three coaxial HPGe gamma detectors.
 - Geant4 with UI and visualization support.
 - CMake 3.16 or newer.
 - A C++17 compiler.
-- Python with `numpy`, `matplotlib`, `pandas`, and `pyarrow` for Parquet output
-  and validation plots.
+- Python with `numpy`, `matplotlib`, `polars`, `pyarrow`, and `scipy` for
+  Parquet output, validation plots, and notebook analysis.
 
 ## Build
 
@@ -127,6 +127,19 @@ every 10,000 events:
 ```bash
 bash aws/bootstrap_ubuntu_24_04.sh
 bash aws/run_production_ubuntu.sh
+```
+
+For the long `b=0` event-reweighting base template, run the 2,000,000,000-event
+AWS macro:
+
+```bash
+MACRO=macros/run_b0_reweight_base_aws_2B.mac bash aws/run_production_ubuntu.sh
+```
+
+It writes:
+
+```text
+build-aws/output/22Na_b0_reweight_base_2B.parquet
 ```
 
 The previous importance-sampled HPGe triple-coincidence mode is disabled. It

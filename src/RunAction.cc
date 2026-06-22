@@ -156,7 +156,7 @@ void RunAction::CombineShardsOnMaster(const G4Run*) {
     G4Exception("RunAction::CombineShardsOnMaster", "ParquetCombineFailed",
                 FatalException,
                 "Failed to combine CSV shards into the requested Parquet file. "
-                "Make sure python3, pyarrow, and pandas are available.");
+                "Make sure python3 and pyarrow are available.");
   }
 }
 

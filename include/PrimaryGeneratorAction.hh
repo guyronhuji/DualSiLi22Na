@@ -6,6 +6,8 @@
 #include "G4VUserPrimaryGeneratorAction.hh"
 
 #include <memory>
+#include <random>
+#include <vector>
 
 class G4ParticleGun;
 class G4ParticleDefinition;
@@ -20,8 +22,12 @@ public:
 private:
   void ConfigureIon();
   void ConfigureExplicitPrimaries();
+  void ConfigurePositronOnly();
   void GenerateIonPrimaries(G4Event* event);
   void GenerateExplicit22NaPrimaries(G4Event* event);
+  void GeneratePositronOnlyPrimaries(G4Event* event);
+  void LoadSpectrumFile();
+  G4double SampleSpectrumEnergy() const;
   G4double SampleBetaKineticEnergy() const;
   G4ThreeVector SampleIsotropicDirection() const;
   G4ThreeVector SampleConeDirection(const G4ThreeVector& axis,
@@ -35,6 +41,11 @@ private:
   G4ParticleDefinition* fGamma = nullptr;
   G4bool fIonConfigured = false;
   G4bool fExplicitPrimariesConfigured = false;
+  G4bool fPositronOnlyConfigured = false;
+  G4bool fSpectrumLoaded = false;
+  std::vector<G4double> fSpectrumEnergy;
+  std::vector<G4double> fSpectrumRate;
+  mutable std::piecewise_linear_distribution<G4double> fSpectrumDist;
 };
 
 #endif

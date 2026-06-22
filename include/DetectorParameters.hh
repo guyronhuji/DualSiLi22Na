@@ -43,6 +43,9 @@ struct DetectorParameters {
   G4bool suppressFastPositronAnnihilation = true;
   G4double positronKillEnergy = 100.0 * eV;
 
+  G4bool positronOnlyMode = false;
+  G4String betaSpectrumFile = "";
+
   G4String outputFileName = "output/dual_sili_22na.parquet";
 #ifdef __APPLE__
   G4String parquetPythonCommand = "/usr/bin/arch -arm64 python3";

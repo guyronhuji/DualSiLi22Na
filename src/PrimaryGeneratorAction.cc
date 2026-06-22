@@ -11,12 +11,29 @@
 
 #include <algorithm>
 #include <cmath>
+#include <fstream>
+#include <random>
+#include <sstream>
 #include <string>
+#include <utility>
+#include <vector>
 
 namespace {
 constexpr G4double kTwoPi = 6.2831853071795864769;
 constexpr G4double kFourPi = 12.5663706143591729539;
 constexpr G4double kElectronMassKeV = 510.99895;
+
+// Wraps G4UniformRand() so std::piecewise_linear_distribution can use it.
+// Each PrimaryGeneratorAction lives on one thread, so G4UniformRand() is safe.
+struct G4RngAdapter {
+  using result_type = uint64_t;
+  static constexpr result_type min() { return 0; }
+  static constexpr result_type max() { return UINT64_MAX; }
+  result_type operator()() const {
+    return static_cast<result_type>(G4UniformRand() *
+                                    static_cast<G4double>(UINT64_MAX));
+  }
+};
 
 G4double ConeSolidAngle(G4double halfAngle) {
   return kTwoPi * (1.0 - std::cos(halfAngle));
@@ -61,6 +78,11 @@ void PrimaryGeneratorAction::ConfigureIon() {
 }
 
 void PrimaryGeneratorAction::GeneratePrimaries(G4Event* event) {
+  if (fParameters->positronOnlyMode) {
+    GeneratePositronOnlyPrimaries(event);
+    return;
+  }
+
   if (fParameters->importanceSampling) {
     G4Exception(
         "PrimaryGeneratorAction::GeneratePrimaries",
@@ -171,6 +193,108 @@ void PrimaryGeneratorAction::GenerateExplicit22NaPrimaries(G4Event* event) {
   shoot(fGamma, 511.0 * keV, annihilationDirection);
   shoot(fGamma, 511.0 * keV, -annihilationDirection);
   shoot(fGamma, 1274.5 * keV, gamma1274Direction);
+}
+
+void PrimaryGeneratorAction::ConfigurePositronOnly() {
+  auto table = G4ParticleTable::GetParticleTable();
+  fPositron = table->FindParticle("e+");
+  if (!fPositron) {
+    G4Exception("PrimaryGeneratorAction::ConfigurePositronOnly",
+                "MissingParticle", FatalException,
+                "Could not obtain e+ particle definition.");
+  }
+  fPositronOnlyConfigured = true;
+  G4cout << "Source: positron-only mode, spectrum file = "
+         << fParameters->betaSpectrumFile << G4endl;
+}
+
+void PrimaryGeneratorAction::LoadSpectrumFile() {
+  const auto path = std::string(fParameters->betaSpectrumFile.data());
+  if (path.empty()) {
+    G4Exception("PrimaryGeneratorAction::LoadSpectrumFile", "NoSpectrumFile",
+                FatalException,
+                "positronOnly mode requires /source/betaSpectrumFile to be set.");
+  }
+
+  std::ifstream file(path);
+  if (!file.is_open()) {
+    G4Exception("PrimaryGeneratorAction::LoadSpectrumFile", "FileOpenFailed",
+                FatalException, ("Cannot open spectrum file: " + path).c_str());
+  }
+
+  std::vector<std::pair<G4double, G4double>> data;
+  std::string line;
+  while (std::getline(file, line)) {
+    if (line.empty() || line[0] == '#') continue;
+    std::istringstream iss(line);
+    G4double c0, energy, rate;
+    // col 1 (skip), col 2 = energy (keV), col 3 = differential decay rate
+    if (!(iss >> c0 >> energy >> rate)) continue;
+    if (rate < 0.0) rate = 0.0;
+    data.emplace_back(energy * keV, rate);
+  }
+
+  if (data.size() < 2) {
+    G4Exception("PrimaryGeneratorAction::LoadSpectrumFile", "InsufficientData",
+                FatalException,
+                ("Spectrum file has fewer than 2 valid rows: " + path).c_str());
+  }
+
+  std::sort(data.begin(), data.end());
+
+  fSpectrumEnergy.clear();
+  fSpectrumRate.clear();
+  fSpectrumEnergy.reserve(data.size());
+  fSpectrumRate.reserve(data.size());
+  for (const auto& p : data) {
+    fSpectrumEnergy.push_back(p.first);
+    fSpectrumRate.push_back(p.second);
+  }
+
+  const auto maxRate =
+      *std::max_element(fSpectrumRate.begin(), fSpectrumRate.end());
+  if (maxRate <= 0.0) {
+    G4Exception("PrimaryGeneratorAction::LoadSpectrumFile", "ZeroSpectrum",
+                FatalException,
+                ("All rates in spectrum file are zero: " + path).c_str());
+  }
+
+  // Build piecewise-linear distribution: O(log N) sampling, no rejection loop.
+  fSpectrumDist = std::piecewise_linear_distribution<G4double>(
+      fSpectrumEnergy.begin(), fSpectrumEnergy.end(), fSpectrumRate.begin());
+
+  fSpectrumLoaded = true;
+  G4cout << "Source: loaded " << fSpectrumEnergy.size()
+         << " spectrum points from " << path << ", E range ["
+         << fSpectrumEnergy.front() / keV << ", "
+         << fSpectrumEnergy.back() / keV << "] keV" << G4endl;
+}
+
+G4double PrimaryGeneratorAction::SampleSpectrumEnergy() const {
+  G4RngAdapter rng;
+  return fSpectrumDist(rng);
+}
+
+void PrimaryGeneratorAction::GeneratePositronOnlyPrimaries(G4Event* event) {
+  if (!fPositronOnlyConfigured) {
+    ConfigurePositronOnly();
+  }
+  if (!fSpectrumLoaded) {
+    LoadSpectrumFile();
+  }
+
+  const auto radius = fParameters->sourceRadius * std::sqrt(G4UniformRand());
+  const auto phi = kTwoPi * G4UniformRand();
+  const auto z = (G4UniformRand() - 0.5) * fParameters->sourceThickness;
+  const G4ThreeVector position(radius * std::cos(phi), radius * std::sin(phi), z);
+
+  fParticleGun->SetParticleDefinition(fPositron);
+  fParticleGun->SetParticlePosition(position);
+  fParticleGun->SetParticleTime(0.0);
+  fParticleGun->SetParticleEnergy(SampleSpectrumEnergy());
+  fParticleGun->SetParticleMomentumDirection(SampleIsotropicDirection());
+  fParticleGun->SetParticleWeight(1.0);
+  fParticleGun->GeneratePrimaryVertex(event);
 }
 
 G4double PrimaryGeneratorAction::SampleBetaKineticEnergy() const {

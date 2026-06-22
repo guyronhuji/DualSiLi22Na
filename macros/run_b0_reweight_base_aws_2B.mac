@@ -1,0 +1,26 @@
+# AWS long run for the b=0 reweighting base template.
+# This is 20x longer than the 100,000,000-event b=0 template.
+
+/run/verbose 1
+/run/numberOfThreads 16
+/run/printProgress 100000
+/event/verbose 0
+/tracking/verbose 0
+
+/geometry/sourceRadius 2.5 mm
+/geometry/sourceThickness 10 um
+/geometry/kaptonThickness 1 um
+/geometry/siliActiveDiameter 50 mm
+/geometry/siliActiveThickness 5 mm
+/geometry/siliCrystalFaceGap 2 mm
+/geometry/hpgeFrontDistance 33 mm
+
+/source/positronOnly true
+/source/betaSpectrumFile 22Na_0.raw
+
+/output/fileName output/22Na_b0_reweight_base_2B.parquet
+/output/truthOutput false
+
+/run/initialize
+/geometry/test/run
+/run/beamOn 2000000000

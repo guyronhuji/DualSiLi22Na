@@ -3,7 +3,7 @@
 
 /run/verbose 1
 /run/numberOfThreads 16
-/run/printProgress 10000
+/run/printProgress 100000
 /event/verbose 0
 /tracking/verbose 0
 

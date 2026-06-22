@@ -85,6 +85,12 @@ DetectorConstruction::DetectorConstruction(
   fSourceMessenger->DeclarePropertyWithUnit(
       "positronKillEnergy", "keV", fParameters->positronKillEnergy,
       "Kinetic-energy threshold used when suppressing fast-mode positron annihilation");
+  fSourceMessenger->DeclareProperty(
+      "positronOnly", fParameters->positronOnlyMode,
+      "Emit a single positron per event, isotropically, with energy sampled from betaSpectrumFile");
+  fSourceMessenger->DeclareProperty(
+      "betaSpectrumFile", fParameters->betaSpectrumFile,
+      "4-column spectrum file for positronOnly mode: col 2 = energy (keV), col 3 = dN/dE");
 
   fOutputMessenger = new G4GenericMessenger(this, "/output/", "Output controls");
   fOutputMessenger->DeclareProperty(

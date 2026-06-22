@@ -44,6 +44,37 @@ The final output is:
 build-aws/output/dual_sili_22na_50000000.parquet
 ```
 
+## Run The Long b=0 Reweighting Template
+
+For the event-reweighting Fierz analysis, the useful long template is the
+`b=0` positron-only base sample. The AWS macro below runs 2,000,000,000 events,
+which is 20 times longer than the 100,000,000-event template used during local
+development:
+
+```bash
+MACRO=macros/run_b0_reweight_base_aws_2B.mac bash aws/run_production_ubuntu.sh
+```
+
+The macro uses:
+
+```text
+/run/numberOfThreads 16
+/run/printProgress 100000
+/source/positronOnly true
+/source/betaSpectrumFile 22Na_0.raw
+/run/beamOn 2000000000
+```
+
+The final output is:
+
+```text
+build-aws/output/22Na_b0_reweight_base_2B.parquet
+```
+
+This run is large. Since the 100M-event template is several GB, use a large EBS
+volume for the 2B-event run; 500 GB is a practical minimum, and 1 TB gives more
+room for temporary CSV shards during Parquet conversion.
+
 The previous importance-sampled HPGe triple-coincidence macro is disabled and
 should not be used for production physics. It relied on a fast surrogate source
 that did not preserve the full `22Na` decay/transport spectrum.

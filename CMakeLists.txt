@@ -106,3 +106,9 @@ foreach(_dir macros analysis output)
   file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/${_dir}
        DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 endforeach()
+
+file(GLOB DUALSILI_BETA_SPECTRA CONFIGURE_DEPENDS
+     "${CMAKE_CURRENT_SOURCE_DIR}/22Na_*.raw")
+foreach(_spectrum ${DUALSILI_BETA_SPECTRA})
+  file(COPY ${_spectrum} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+endforeach()

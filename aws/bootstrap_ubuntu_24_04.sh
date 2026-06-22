@@ -34,7 +34,7 @@ fi
 python3 -m venv "$VENV_DIR"
 source "$VENV_DIR/bin/activate"
 python -m pip install --upgrade pip
-python -m pip install jupyter matplotlib numpy pandas pyarrow scipy
+python -m pip install jupyter matplotlib numpy polars pyarrow scipy
 
 if [[ -x "$GEANT4_PREFIX/bin/geant4-config" ]]; then
   echo "Using existing Geant4 at $GEANT4_PREFIX"
